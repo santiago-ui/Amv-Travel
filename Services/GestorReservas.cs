@@ -15,6 +15,7 @@ namespace AMVTravels.Services
         {
             _context = context;
             Tours = new List<Tour>();
+
             Reservas = new List<Reserva>();
         }
 
@@ -41,6 +42,7 @@ namespace AMVTravels.Services
 
         public List<Reserva> ObtenerReservas()
         {
+            
             Reservas = (from reserva in _context.Reservas
                         select reserva).Include(r => r.Tour).ToList();
             return Reservas;
