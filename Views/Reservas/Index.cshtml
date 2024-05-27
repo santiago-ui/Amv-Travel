@@ -1,0 +1,138 @@
+﻿@{
+    ViewData["Title"] = "Ver Reservas";
+}
+
+<h1>Ver Reservas</h1>
+
+<table id="reservasTable" class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Cliente</th>
+            <th>Fecha de Reserva</th>
+            <th>Tour</th>
+            <th>Detalle</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Los datos se cargarán aquí con AJAX -->
+    </tbody>
+</table>
+
+
+<button id="refreshButton" class="btn btn-primary">Actualizar Reservas</button>
+<button id="reservarButton" class="btn btn-success">Reservar Tour</button>
+<!-- Modal -->
+<div class="modal" id="detalleTourModal" tabindex="-1" role="dialog" aria-labelledby="detalleTourModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detalleTourModalLabel">Detalles del Tour</h5>
+                <button type="button" class="close cerrarModal" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Nombre:</strong> <span id="detalleNombre"></span></p>
+                <p><strong>Destino:</strong> <span id="detalleDestino"></span></p>
+                <p><strong>Fecha de Inicio:</strong> <span id="detalleFechaInicio"></span></p>
+                <p><strong>Fecha de Fin:</strong> <span id="detalleFechaFin"></span></p>
+                <p><strong>Precio:</strong> <span id="detallePrecio"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary cerrarModal" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/utils.js"></script>
+    <script>
+        $(document).ready(function () {
+            function cargarReservas() {
+                $.ajax({
+                    url: '@Url.Action("ObtenerReservas", "Reservas")',
+                    type: 'GET',
+                    success: function (data) {
+                        var tableBody = $('#reservasTable tbody');
+                        tableBody.empty();
+                        $.each(data, function (index, reserva) {
+                            var row = '<tr><td>' + reserva.id + '</td><td>' + reserva.cliente + '</td><td>' + formatearFecha(reserva.fechaReserva) + '</td><td>' + reserva.tour + '</td>' +
+                                '<td>' +
+                                '<button class="btn btn-info btn-detalle" data-id="' + reserva.tourId + '">Detalles</button> ' +
+                                '<button class="btn btn-danger btn-eliminar" data-id="' + reserva.id + '">Eliminar</button>' +
+                                '</td></tr>';
+                            tableBody.append(row);
+                        });
+
+                        // Attach click event for "Detalles" buttons
+                        $('.btn-detalle').click(function () {
+                            var tourId = $(this).data('id');
+                            obtenerDetallesTour(tourId);
+                        });
+
+                        $('.btn-eliminar').click(function () {
+                            var reservaId = $(this).data('id');
+                            eliminarReserva(reservaId);
+                        });
+                    },
+                    error: function () {
+                        alert('Ocurrió un error al obtener las reservas.');
+                    }
+                });
+            }
+
+            function obtenerDetallesTour(tourId) {
+                $.ajax({
+                    url: '@Url.Action("Detalles", "Tours")' + '/' + tourId,
+                    type: 'GET',
+                    success: function (data) {
+                        $('#detalleNombre').text(data.nombre);
+                        $('#detalleDestino').text(data.destino);
+                        $('#detalleFechaInicio').text(new Date(data.fechaInicio).toLocaleString());
+                        $('#detalleFechaFin').text(new Date(data.fechaFin).toLocaleString());
+                        $('#detallePrecio').text(parseFloat(data.precio).toFixed(2));
+                        $('#detalleTourModal').modal('show');
+                    },
+                    error: function () {
+                        alert('Ocurrió un error al obtener los detalles del tour.');
+                    }
+                });
+            }
+
+            function eliminarReserva(reservaId) {
+                if (confirm('¿Está seguro de que desea eliminar esta reserva?')) {
+                    $.ajax({
+                        url: '@Url.Action("Eliminar", "Reservas")' + '/' + reservaId,
+                        type: 'DELETE',
+                        success: function () {
+                            alert('Reserva eliminada correctamente.');
+                            cargarReservas();
+                        },
+                        error: function () {
+                            alert('Ocurrió un error al eliminar la reserva.');
+                        }
+                    });
+                }
+            }
+
+            $('#refreshButton').click(function () {
+                cargarReservas();
+            });
+
+            // Cargar las reservas al cargar la página
+            cargarReservas();
+        });
+
+        $(".cerrarModal").click(function () {
+            $("#detalleTourModal").modal('hide')
+        });
+
+        $('#reservarButton').click(function () {
+            window.location.href = '@Url.Action("ReservarTour", "Reservas")';
+        });
+    </script>
+}

@@ -1,0 +1,75 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model IEnumerable<Tour>
+@{
+    ViewData["Title"] = "Tours";
+}
+
+<h1>Tours</h1>
+
+<table id="toursTable" class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nombre</th>
+            <th>Destino</th>
+            <th>Fecha Inicio</th>
+            <th>Fecha Fin</th>
+            <th>Precio</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tour in Model)
+        {
+            <tr>
+                <td>@tour.Id</td>
+                <td>@tour.Nombre</td>
+                <td>@tour.Destino</td>
+                <td>@String.Format("{0:dd/MM/yyyy, HH:mm:ss}", tour.FechaInicio)</td>
+                <td>@String.Format("{0:dd/MM/yyyy, HH:mm:ss}", tour.FechaFin)</td>
+                <td>@tour.Precio</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<button id="refreshButton" class="btn btn-primary">Actualizar Tours</button>
+<button id="agregarTourButton" class="btn btn-success">Agregar Tour</button>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/js/utils.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#refreshButton').click(function () {
+                
+                $.ajax({
+                    url: '/Tours/ObtenerTours',
+                    type: 'GET',
+                    success: function (data) {
+                        var tableBody = $('#toursTable tbody');
+                        tableBody.empty();                    
+
+                        $.each(data, function (index, tour) {
+                            var fechaInicio = formatearFecha(tour.fechaInicio);
+                            var fechaFin = formatearFecha(tour.fechaFin);
+                            var precio = parseFloat(tour.precio).toFixed(2);
+                            tableBody.append('<tr><td>' + tour.id + '</td><td>' + tour.nombre + '</td><td>' + tour.destino + '</td><td>' + fechaInicio + '</td><td>' + fechaFin + '</td><td>' + precio + '</td></tr>');
+                        });
+                        
+                    }
+                     error: function () {
+                        alert("Error al obtener las reservas");
+                        
+                    }
+
+                });
+            });
+        });
+
+        $('#agregarTourButton').click(function () {
+            window.location.href = '@Url.Action("AgregarTour", "Tours")';
+        });
+    </script>
+}
